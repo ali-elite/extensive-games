@@ -1,2 +1,4 @@
 igraph
 plotly
+networkx
+matplotlib
