@@ -7,6 +7,7 @@ class ExtensiveFormGame:
         self.tree = nx.DiGraph()
         self.payoffs = {}
         self.simultaneous_moves = []
+        self.spne_edges = []
 
     def add_node(self, node, player=None, payoff=None):
         self.tree.add_node(node, player=player, payoff=payoff)
@@ -60,6 +61,10 @@ class ExtensiveFormGame:
             x2, y2 = pos[node2]
             plt.plot([x1 + 0.03, x2 - 0.03], [y1, y2], 'k--')
 
+        # Highlight SPNE edges in yellow
+        for edge in self.spne_edges:
+            nx.draw_networkx_edges(self.tree, pos, edgelist=[edge], edge_color='yellow', width=2.5)
+
         plt.show()
 
     def find_spne(self):
@@ -74,6 +79,7 @@ class ExtensiveFormGame:
                     best_choice = max(choices, key=lambda n: spne[n][0] if player == 'P1' else spne[n][1])
                     spne[node] = spne[best_choice]
                     self.tree.nodes[node]['best_choice'] = best_choice
+                    self.spne_edges.append((node, best_choice))
 
         # Handle simultaneous moves
         for (node1, node2) in self.simultaneous_moves:
@@ -90,15 +96,28 @@ class ExtensiveFormGame:
 
             self.tree.nodes[node1]['best_choice'] = best_choice1
             self.tree.nodes[node2]['best_choice'] = best_choice2
+            self.spne_edges.append((node1, best_choice1))
+            self.spne_edges.append((node2, best_choice2))
 
         return spne
 
     def display_spne(self):
         spne = self.find_spne()
-        print("Subgame Perfect Nash Equilibrium:")
-        for node, payoff in spne.items():
+        strategies = {}
+
+        for node in nx.topological_sort(self.tree):
             if 'best_choice' in self.tree.nodes[node]:
-                print(f"At node {node}, best choice: {self.tree.nodes[node]['best_choice']} with payoff {payoff}")
+                best_choice = self.tree.nodes[node]['best_choice']
+                action = self.tree.edges[(node, best_choice)]['action']
+                player = self.tree.nodes[node]['player']
+                if player not in strategies:
+                    strategies[player] = []
+                strategies[player].append((node, action))
+
+        spne_format = "SPNE = ("
+        spne_format += ", ".join(f"({', '.join(action for _, action in actions)})" for player, actions in strategies.items())
+        spne_format += ")"
+        print(spne_format)
 
 
 game = ExtensiveFormGame()
@@ -106,26 +125,34 @@ game = ExtensiveFormGame()
 # Add nodes: (node, player, payoff)
 game.add_node('Root', player='P1')
 game.add_node('A', player='P2')
-game.add_node('B', player='P2', payoff=(1, 6))
-game.add_node('C',  player='P1')
-game.add_node('D',  player='P1')
-game.add_node('E', payoff=(4, 3))
-game.add_node('F', payoff=(2, 4))
-game.add_node('G', payoff=(0, 1))
-game.add_node('H', payoff=(2, 2))
+game.add_node('B', player='P2')
+game.add_node('C', player='P2')
+game.add_node('D', player='P3')
+game.add_node('E', player='P3')
+game.add_node('F', payoff=(9, 19, 13))
+game.add_node('G', payoff=(13, 3, 16))
+game.add_node('H', payoff=(17, 20, 2))
+game.add_node('I', payoff=(20, 9, 5))
+game.add_node('J', payoff=(2, 15, 10))
+game.add_node('K', payoff=(14, 5, 11))
+game.add_node('L', payoff=(19, 7, 14))
+game.add_node('M', payoff=(2, 0, 7))
 
 # Add edges: (from_node, to_node, action)
-game.add_edge('Root', 'A', action='D')
-game.add_edge('Root', 'B', action='U')
-game.add_edge('A', 'C', action='A')
-game.add_edge('A', 'D', action='B')
-game.add_edge('C', 'E', action='L')
-game.add_edge('C', 'F', action='R')
-game.add_edge('D', 'G', action='L')
-game.add_edge('D', 'H', action='R')
+game.add_edge('Root', 'A', action='A')
+game.add_edge('Root', 'B', action='B')
+game.add_edge('Root', 'C', action='C')
+game.add_edge('A', 'F', action='a')
+game.add_edge('A', 'G', action='b')
+game.add_edge('B', 'D', action='c')
+game.add_edge('B', 'E', action='d')
+game.add_edge('D', 'H', action='L')
+game.add_edge('D', 'I', action='M')
+game.add_edge('E', 'J', action='N')
+game.add_edge('E', 'K', action='O')
+game.add_edge('C', 'L', action='e')
+game.add_edge('C', 'M', action='f')
 
-# Add simultaneous move (dashed line between nodes)
-game.add_simultaneous_move('C', 'D')
 
-game.display_tree()
 game.display_spne()
+game.display_tree()
