@@ -23,4 +23,4 @@ This project implements advanced game-theoretic concepts natively in Python, spe
 - **Core Libraries**: NetworkX (for graph theory mapping), Matplotlib
 
 ---
-*Sharif University of Technology - Computer Engineering Department*
+*Sharif University of Technology - Computer Science Department*
